@@ -38,6 +38,34 @@
 </head>
 <body class="bg-logo-watermark text-gray-800 font-sans min-h-screen">
 
+    <!--
+    ============================================================
+    ℹ️ NOTES IMPORTANTES POUR TOI (à lire avant de publier) :
+
+    1) BASE DE DONNÉES SUPABASE — colonnes à ajouter/vérifier :
+       Table "products" :
+         - price            (numeric)  -> prix de VENTE (déjà existant)
+         - rent_price       (numeric, peut être vide) -> prix de LOCATION
+         - listing_type     (text) -> 'vente', 'location', ou 'les_deux'
+         - compare_at_price (numeric, optionnel) -> ancien prix barré
+         - image_url, name, is_active (déjà existants)
+
+       Table "orders" : ajouter
+         - subtotal     (numeric)
+         - delivery_fee (numeric)
+         (le champ "total" existant devient le TOTAL FINAL = subtotal + delivery_fee)
+
+       Table "order_items" : ajouter
+         - type (text) -> 'vente' ou 'location', pour savoir ce que le client a choisi
+
+    2) CONNEXION GOOGLE :
+       Dans ton dashboard Supabase -> Authentication -> Providers -> active "Google",
+       puis renseigne un Client ID / Secret Google (console Google Cloud) et ajoute
+       l'URL de ton site dans "Redirect URLs". Sans cette étape, le bouton Google
+       affichera une erreur.
+    ============================================================
+    -->
+
     <!-- 1. TOP ANNOUNCEMENT BAR -->
     <div class="bg-[#c5a059] text-white text-center py-2 text-sm font-medium tracking-wide shadow-sm">
         ✨ Livraison gratuite sur toute la Tunisie pour les commandes de plus de 150 DT !
@@ -63,7 +91,18 @@
             </nav>
 
             <div class="flex items-center space-x-6 text-xl text-gray-700 relative">
-                <a href="#" class="hover:text-[#b38f43] transition"><i class="fa-solid fa-magnifying-glass"></i></a>
+
+                <!-- 🔍 BARRE DE RECHERCHE (fonctionnelle) -->
+                <div class="relative">
+                    <button onclick="toggleSearch()" class="hover:text-[#b38f43] transition focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <div id="searchBox" class="hidden absolute right-0 top-8 bg-white shadow-lg rounded-lg border border-gray-100 p-2 z-50 w-64">
+                        <input type="text" id="searchInput" oninput="filterProducts()"
+                               placeholder="Rechercher un produit (holi, abaya...)"
+                               class="w-full border border-gray-300 px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#b38f43]">
+                    </div>
+                </div>
 
                 <!-- Account button / menu -->
                 <div class="relative">
@@ -100,12 +139,13 @@
                     Acheter Maintenant <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
                 </a>
             </div>
-            <div class="hidden md:block h-full bg-cover bg-center rounded-l-2xl shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80');">
+            <!-- 🖼️ COMMENTAIRE : Remplace l'URL ci-dessous par ton image de bannière -->
+            <div class="hidden md:block h-full bg-cover bg-center rounded-l-2xl shadow-inner" style="background-image: url('WhatsApp Image 2026-07-17 at 18.42.23 (2)');">
             </div>
         </div>
     </section>
 
-    <!-- 4. CATEGORIES GRID (dynamic) -->
+    <!-- 4. CATEGORIES GRID (dynamic, avec Holi & Abayas par défaut) -->
     <section id="categories" class="container mx-auto px-4 py-16">
         <h2 class="text-3xl font-serif font-bold text-center mb-2 text-gray-900">Nos Catégories</h2>
         <div class="w-16 h-0.5 bg-[#b38f43] mx-auto mb-12"></div>
@@ -137,6 +177,17 @@
             </button>
             <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-2" id="authModalTitle">Créer un Compte</h3>
             <p class="text-gray-500 text-sm text-center mb-6" id="authModalSubtitle">Rejoignez Lella Mode pour suivre vos commandes et recevoir des promos exclusives.</p>
+
+            <!-- 🔵 CONNEXION GOOGLE DIRECTE -->
+            <button type="button" onclick="signInWithGoogle()" class="w-full flex items-center justify-center gap-2 border border-gray-300 py-2.5 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition mb-4">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                Continuer avec Google
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-xs text-gray-400 uppercase">ou avec un email</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
 
             <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
                 <div id="nameField">
@@ -178,10 +229,7 @@
                 <p class="text-gray-400 text-center py-10">Votre panier est vide.</p>
             </div>
             <div class="border-t p-5 space-y-3">
-                <div class="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span id="cartTotal">0.00 DT</span>
-                </div>
+                <div id="cartTotal" class="text-sm text-gray-700 space-y-1">0.00 DT</div>
                 <button onclick="openCheckout()" id="checkoutBtn" class="w-full bg-gray-900 text-white font-medium py-3 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md disabled:opacity-40" disabled>
                     Passer la commande
                 </button>
@@ -196,6 +244,9 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-6">Finaliser la commande</h3>
+
+            <div id="checkoutSummary" class="bg-amber-50 rounded-md p-3 text-sm text-gray-700 space-y-1 mb-6"></div>
+
             <form id="checkoutForm" onsubmit="handleCheckoutSubmit(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
@@ -279,8 +330,27 @@
 
         let currentUser = null;
         let authMode = 'register'; // or 'login'
-        let cart = []; // {product_id, name, price, image_url, quantity}
+        let cart = []; // {cart_key, product_id, name, price, type, label, image_url, quantity}
         let productsCache = [];
+
+        // 🚚 Frais de livraison fixes (utilisés si le sous-total est sous 150 DT)
+        const DELIVERY_FEE = 7;
+        const FREE_DELIVERY_THRESHOLD = 150;
+
+        // 🖼️ COMMENTAIRE : Catégories par défaut affichées si la table Supabase "categories"
+        // est vide ou inaccessible. Remplace les URLs ci-dessous par tes vraies photos.
+        const DEFAULT_CATEGORIES = [
+            {
+                name: 'Holi Gabésien',
+                // 🖼️ Mets ici l'URL de la photo de ton Holi (tenue traditionnelle gabésienne)
+                image_url: 'METTRE_ICI_URL_IMAGE_HOLI'
+            },
+            {
+                name: 'Abayas',
+                // 🖼️ Mets ici l'URL de la photo de tes Abayas
+                image_url: 'METTRE_ICI_URL_IMAGE_ABAYA'
+            }
+        ];
 
         // ---------- TOAST ----------
         function showToast(msg) {
@@ -288,6 +358,27 @@
             toast.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        // ---------- SEARCH ----------
+        function toggleSearch() {
+            const box = document.getElementById('searchBox');
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                document.getElementById('searchInput').focus();
+            }
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const cards = document.querySelectorAll('#productsGrid > div[data-name]');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                card.style.display = name.includes(query) ? '' : 'none';
+            });
+            if (query) {
+                document.getElementById('nouvelle-collection').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         // ---------- AUTH ----------
@@ -300,6 +391,10 @@
         supabase.auth.onAuthStateChange((_event, session) => {
             currentUser = session ? session.user : null;
             updateAccountUI();
+            if (currentUser) {
+                const modal = document.getElementById('registerModal');
+                if (!modal.classList.contains('hidden')) toggleRegisterModal();
+            }
         });
 
         function updateAccountUI() {
@@ -326,6 +421,10 @@
             if (!menu.contains(e.target) && !btn.contains(e.target)) {
                 menu.classList.add('hidden');
             }
+            const searchBox = document.getElementById('searchBox');
+            if (!searchBox.contains(e.target) && !e.target.closest('button[onclick="toggleSearch()"]')) {
+                searchBox.classList.add('hidden');
+            }
         });
 
         function toggleRegisterModal() {
@@ -337,6 +436,18 @@
                 modal.classList.add('opacity-0');
                 setTimeout(() => modal.classList.add('hidden'), 300);
             }
+        }
+
+        // 🔵 Connexion / inscription directe avec Google
+        async function signInWithGoogle() {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.href }
+            });
+            if (error) {
+                showToast("Erreur de connexion Google. Réessayez.");
+            }
+            // La page est redirigée vers Google puis revient automatiquement ici, connectée.
         }
 
         function switchAuthMode() {
@@ -425,16 +536,16 @@
             showToast('Vous êtes déconnectée.');
         }
 
-        // ---------- PRODUCTS & CATEGORIES ----------
+        // ---------- CATEGORIES ----------
         async function loadCategories() {
             const grid = document.getElementById('categoriesGrid');
             const { data, error } = await supabase.from('categories').select('*').order('created_at');
-            if (error || !data || data.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">Aucune catégorie disponible.</div>';
-                return;
-            }
-            grid.innerHTML = data.map(cat => `
+
+            const list = (!error && data && data.length > 0) ? data : DEFAULT_CATEGORIES;
+
+            grid.innerHTML = list.map(cat => `
                 <a href="#nouvelle-collection" class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                    <!-- 🖼️ image_url vient soit de Supabase, soit de DEFAULT_CATEGORIES ci-dessus -->
                     <img src="${cat.image_url || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${cat.name}">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
                         <span class="text-white font-semibold text-xl border-b-2 border-white pb-1">${cat.name}</span>
@@ -443,6 +554,7 @@
             `).join('');
         }
 
+        // ---------- PRODUCTS ----------
         async function loadProducts() {
             const grid = document.getElementById('productsGrid');
             const { data, error } = await supabase.from('products').select('*').eq('is_active', true).order('created_at');
@@ -451,53 +563,109 @@
                 return;
             }
             productsCache = data;
-            grid.innerHTML = data.map(p => {
-                const discount = p.compare_at_price ? Math.round(100 - (p.price / p.compare_at_price) * 100) : null;
-                return `
-                <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                    <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
-                        ${discount ? `<span class="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 font-bold rounded z-10">-${discount}%</span>` : ''}
-                        <img src="${p.image_url || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+            grid.innerHTML = data.map(renderProductCard).join('');
+        }
+
+        function renderProductCard(p) {
+            const discount = p.compare_at_price ? Math.round(100 - (p.price / p.compare_at_price) * 100) : null;
+            // listing_type : 'vente', 'location' ou 'les_deux' (colonne à ajouter dans Supabase)
+            const listingType = p.listing_type || 'vente';
+            const salePrice = p.price;
+            const rentPrice = p.rent_price ?? null;
+
+            let priceHtml = '';
+            let buttonsHtml = '';
+
+            if (listingType === 'les_deux' && rentPrice != null) {
+                priceHtml = `
+                    <div class="text-xs text-gray-500 flex justify-between"><span>Achat</span><span class="text-[#b38f43] font-bold">${Number(salePrice).toFixed(2)} DT</span></div>
+                    <div class="text-xs text-gray-500 flex justify-between"><span>Location</span><span class="text-[#b38f43] font-bold">${Number(rentPrice).toFixed(2)} DT</span></div>
+                `;
+                buttonsHtml = `
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button onclick="addToCart('${p.id}', 'vente')" class="bg-gray-900 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition">Acheter</button>
+                        <button onclick="addToCart('${p.id}', 'location')" class="bg-gray-700 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition">Louer</button>
                     </div>
-                    <div class="mt-4 space-y-1">
-                        <h3 class="text-gray-700 font-medium text-sm md:text-base">${p.name}</h3>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-[#b38f43] font-bold">${Number(p.price).toFixed(2)} DT</span>
-                            ${p.compare_at_price ? `<span class="text-gray-400 line-through text-xs">${Number(p.compare_at_price).toFixed(2)} DT</span>` : ''}
-                        </div>
-                        <button onclick="addToCart('${p.id}')" class="w-full mt-2 bg-gray-900 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition">
-                            <i class="fa-solid fa-cart-plus mr-1"></i> Ajouter au panier
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
+                `;
+            } else if (listingType === 'location') {
+                priceHtml = `<span class="text-[#b38f43] font-bold">${Number(rentPrice ?? salePrice).toFixed(2)} DT / location</span>`;
+                buttonsHtml = `<button onclick="addToCart('${p.id}', 'location')" class="w-full mt-2 bg-gray-900 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition"><i class="fa-solid fa-cart-plus mr-1"></i> Louer</button>`;
+            } else {
+                priceHtml = `<span class="text-[#b38f43] font-bold">${Number(salePrice).toFixed(2)} DT</span>${p.compare_at_price ? `<span class="text-gray-400 line-through text-xs ml-2">${Number(p.compare_at_price).toFixed(2)} DT</span>` : ''}`;
+                buttonsHtml = `<button onclick="addToCart('${p.id}', 'vente')" class="w-full mt-2 bg-gray-900 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition"><i class="fa-solid fa-cart-plus mr-1"></i> Ajouter au panier</button>`;
+            }
+
+            return `
+            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-name="${(p.name || '').toLowerCase()}">
+                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                    ${discount ? `<span class="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 font-bold rounded z-10">-${discount}%</span>` : ''}
+                    ${listingType !== 'vente' ? `<span class="absolute top-3 right-3 bg-gray-900/80 text-white text-[10px] px-2 py-1 font-bold rounded z-10 uppercase">${listingType === 'les_deux' ? 'Vente / Location' : 'Location'}</span>` : ''}
+                    <!-- 🖼️ image_url vient de la colonne "image_url" de la table products dans Supabase -->
+                    <img src="${p.image_url || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="mt-4 space-y-1">
+                    <h3 class="text-gray-700 font-medium text-sm md:text-base">${p.name}</h3>
+                    ${priceHtml}
+                    ${buttonsHtml}
+                </div>
+            </div>`;
         }
 
         // ---------- CART ----------
-        function addToCart(productId) {
+        function addToCart(productId, type) {
             const product = productsCache.find(p => p.id === productId);
             if (!product) return;
-            const existing = cart.find(i => i.product_id === productId);
+
+            // ⚠️ Le prix est fixé UNE SEULE FOIS ici, au moment de l'ajout.
+            // Il ne change plus ensuite, même si tu modifies le prix du produit dans Supabase après coup.
+            let price, label;
+            if (type === 'location') {
+                price = Number(product.rent_price ?? product.price);
+                label = 'Location';
+            } else {
+                price = Number(product.price);
+                label = 'Achat';
+            }
+
+            const cartKey = `${productId}_${type}`;
+            const existing = cart.find(i => i.cart_key === cartKey);
             if (existing) {
                 existing.quantity += 1;
             } else {
-                cart.push({ product_id: product.id, name: product.name, price: Number(product.price), image_url: product.image_url, quantity: 1 });
+                cart.push({
+                    cart_key: cartKey,
+                    product_id: product.id,
+                    name: product.name,
+                    price: price,
+                    type: type,
+                    label: label,
+                    image_url: product.image_url,
+                    quantity: 1
+                });
             }
             renderCart();
-            showToast(`${product.name} ajouté au panier`);
+            showToast(`${product.name} (${label}) ajouté au panier`);
         }
 
-        function updateQuantity(productId, delta) {
-            const item = cart.find(i => i.product_id === productId);
+        function updateQuantity(cartKey, delta) {
+            const item = cart.find(i => i.cart_key === cartKey);
             if (!item) return;
             item.quantity += delta;
-            if (item.quantity <= 0) cart = cart.filter(i => i.product_id !== productId);
+            if (item.quantity <= 0) cart = cart.filter(i => i.cart_key !== cartKey);
             renderCart();
         }
 
-        function removeFromCart(productId) {
-            cart = cart.filter(i => i.product_id !== productId);
+        function removeFromCart(cartKey) {
+            cart = cart.filter(i => i.cart_key !== cartKey);
             renderCart();
+        }
+
+        // Calcule sous-total, frais de livraison (7 DT, gratuit dès 150 DT) et total final
+        function calculateTotals() {
+            const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const deliveryFee = subtotal === 0 ? 0 : (subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE);
+            const grandTotal = subtotal + deliveryFee;
+            return { subtotal, deliveryFee, grandTotal };
         }
 
         function renderCart() {
@@ -509,7 +677,7 @@
 
             if (cart.length === 0) {
                 container.innerHTML = '<p class="text-gray-400 text-center py-10">Votre panier est vide.</p>';
-                document.getElementById('cartTotal').textContent = '0.00 DT';
+                document.getElementById('cartTotal').innerHTML = '0.00 DT';
                 return;
             }
 
@@ -518,19 +686,24 @@
                     <img src="${item.image_url || ''}" class="w-16 h-20 object-cover rounded-md bg-gray-100">
                     <div class="flex-1">
                         <p class="font-medium text-sm">${item.name}</p>
+                        <span class="inline-block text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded mb-1">${item.label}</span>
                         <p class="text-[#b38f43] font-bold text-sm">${item.price.toFixed(2)} DT</p>
                         <div class="flex items-center gap-2 mt-1">
-                            <button onclick="updateQuantity('${item.product_id}', -1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">-</button>
+                            <button onclick="updateQuantity('${item.cart_key}', -1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">-</button>
                             <span class="text-sm">${item.quantity}</span>
-                            <button onclick="updateQuantity('${item.product_id}', 1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">+</button>
-                            <button onclick="removeFromCart('${item.product_id}')" class="ml-3 text-xs text-red-400 hover:underline">Retirer</button>
+                            <button onclick="updateQuantity('${item.cart_key}', 1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">+</button>
+                            <button onclick="removeFromCart('${item.cart_key}')" class="ml-3 text-xs text-red-400 hover:underline">Retirer</button>
                         </div>
                     </div>
                 </div>
             `).join('');
 
-            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
-            document.getElementById('cartTotal').textContent = `${total.toFixed(2)} DT`;
+            const { subtotal, deliveryFee, grandTotal } = calculateTotals();
+            document.getElementById('cartTotal').innerHTML = `
+                <div class="text-xs font-normal text-gray-500 flex justify-between"><span>Sous-total</span><span>${subtotal.toFixed(2)} DT</span></div>
+                <div class="text-xs font-normal text-gray-500 flex justify-between"><span>Livraison</span><span>${deliveryFee === 0 ? 'Gratuite' : deliveryFee.toFixed(2) + ' DT'}</span></div>
+                <div class="flex justify-between font-bold text-lg mt-1"><span>Total</span><span>${grandTotal.toFixed(2)} DT</span></div>
+            `;
         }
 
         function toggleCartDrawer() {
@@ -543,6 +716,12 @@
             if (currentUser && currentUser.email) {
                 document.getElementById('checkoutEmail').value = currentUser.email;
             }
+            const { subtotal, deliveryFee, grandTotal } = calculateTotals();
+            document.getElementById('checkoutSummary').innerHTML = `
+                <div class="flex justify-between"><span>Sous-total</span><span>${subtotal.toFixed(2)} DT</span></div>
+                <div class="flex justify-between"><span>Livraison</span><span>${deliveryFee === 0 ? 'Gratuite' : deliveryFee.toFixed(2) + ' DT'}</span></div>
+                <div class="flex justify-between font-bold border-t pt-1 mt-1"><span>Total à payer</span><span>${grandTotal.toFixed(2)} DT</span></div>
+            `;
             document.getElementById('checkoutModal').classList.remove('hidden');
         }
 
@@ -560,12 +739,15 @@
             const phone = document.getElementById('checkoutPhone').value.trim();
             const address = document.getElementById('checkoutAddress').value.trim();
             const city = document.getElementById('checkoutCity').value.trim();
-            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const { subtotal, deliveryFee, grandTotal } = calculateTotals();
 
             try {
                 const { data: order, error: orderError } = await supabase.from('orders').insert({
                     customer_id: currentUser ? currentUser.id : null,
-                    full_name, email, phone, address, city, total
+                    full_name, email, phone, address, city,
+                    subtotal: subtotal,
+                    delivery_fee: deliveryFee,
+                    total: grandTotal // total final = sous-total + 7 DT (ou gratuit dès 150 DT)
                 }).select().single();
                 if (orderError) throw orderError;
 
@@ -574,7 +756,8 @@
                     product_id: i.product_id,
                     product_name: i.name,
                     unit_price: i.price,
-                    quantity: i.quantity
+                    quantity: i.quantity,
+                    type: i.type // 'vente' ou 'location'
                 }));
                 const { error: itemsError } = await supabase.from('order_items').insert(items);
                 if (itemsError) throw itemsError;
@@ -616,9 +799,11 @@
                         <span class="uppercase text-xs font-bold text-[#b38f43]">${order.status}</span>
                     </div>
                     <ul class="text-sm text-gray-600 space-y-1 mb-2">
-                        ${order.order_items.map(it => `<li>${it.quantity} x ${it.product_name}</li>`).join('')}
+                        ${order.order_items.map(it => `<li>${it.quantity} x ${it.product_name} ${it.type ? `<span class="text-xs text-gray-400">(${it.type === 'location' ? 'Location' : 'Achat'})</span>` : ''}</li>`).join('')}
                     </ul>
-                    <div class="text-right font-bold text-sm">${Number(order.total).toFixed(2)} DT</div>
+                    <div class="text-xs text-gray-500 flex justify-between"><span>Sous-total</span><span>${Number(order.subtotal ?? order.total).toFixed(2)} DT</span></div>
+                    <div class="text-xs text-gray-500 flex justify-between"><span>Livraison</span><span>${Number(order.delivery_fee ?? 0).toFixed(2)} DT</span></div>
+                    <div class="text-right font-bold text-sm mt-1">${Number(order.total).toFixed(2)} DT</div>
                 </div>
             `).join('');
         }
