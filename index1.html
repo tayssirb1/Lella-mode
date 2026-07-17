@@ -8,22 +8,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         html { scroll-behavior: smooth; }
-        
+
         /* 💡 COMMENTAIRE : C'est ici que l'image du logo est appliquée en arrière-plan (Watermark) */
-        /* Remplacez 'URL_DE_VOTRE_LOGO_ICI' par le lien de votre image pour l'arrière-plan discret */
         .bg-logo-watermark {
-            background-image: linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)), 
+            background-image: linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)),
                               url('URL_DE_VOTRE_LOGO_ICI');
             background-size: 500px;
             background-repeat: repeat;
             background-position: center;
         }
+        .spinner {
+            border: 2px solid #eee; border-top-color: #b38f43; border-radius: 50%;
+            width: 16px; height: 16px; animation: spin 0.7s linear infinite; display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 100;
+            background: #1f2937; color: white; padding: 12px 20px; border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-size: 14px; transform: translateY(20px); opacity: 0;
+            transition: all 0.3s ease; pointer-events: none;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<!-- L'arrière-plan global utilise la classe bg-logo-watermark définie ci-dessus -->
 <body class="bg-logo-watermark text-gray-800 font-sans min-h-screen">
 
     <!-- 1. TOP ANNOUNCEMENT BAR -->
@@ -34,18 +46,15 @@
     <!-- 2. NAVIGATION BAR -->
     <header class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-amber-100">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            
-            <!-- Logo Section -->
+
             <a href="#" class="flex items-center space-x-3">
-                <!-- 💡 COMMENTAIRE : Mettez le lien de votre image de logo dans le 'src' ci-dessous pour l'afficher dans la barre de navigation -->
                 <img src="489019445_3786722148140686_851500397286159017_n.jpg" alt="Lella Mode Logo" class="h-12 w-auto object-contain fallback-hidden" onerror="this.style.display='none'">
                 <div class="flex flex-col">
                     <span class="text-xl font-serif font-bold tracking-wider text-[#b38f43]">LELLA MODE</span>
                     <span class="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-sans -mt-1">Gabes</span>
                 </div>
             </a>
-            
-            <!-- Working Navigation Links -->
+
             <nav class="hidden md:flex space-x-8 font-medium">
                 <a href="#" class="text-[#b38f43] border-b-2 border-[#b38f43] pb-1">Accueil</a>
                 <a href="#nouvelle-collection" class="hover:text-[#b38f43] transition">Nouvelle Collection</a>
@@ -53,17 +62,25 @@
                 <a href="#contact" class="hover:text-[#b38f43] transition">Contact</a>
             </nav>
 
-            <!-- User Actions -->
-            <div class="flex items-center space-x-6 text-xl text-gray-700">
+            <div class="flex items-center space-x-6 text-xl text-gray-700 relative">
                 <a href="#" class="hover:text-[#b38f43] transition"><i class="fa-solid fa-magnifying-glass"></i></a>
-                <!-- Ouvre la boîte d'inscription -->
-                <button onclick="toggleRegisterModal()" class="hover:text-[#b38f43] transition focus:outline-none">
-                    <i class="fa-regular fa-user"></i>
-                </button>
-                <a href="#" class="hover:text-[#b38f43] transition relative">
+
+                <!-- Account button / menu -->
+                <div class="relative">
+                    <button id="accountBtn" onclick="handleAccountClick()" class="hover:text-[#b38f43] transition focus:outline-none">
+                        <i class="fa-regular fa-user"></i>
+                    </button>
+                    <div id="accountMenu" class="hidden absolute right-0 top-8 bg-white shadow-lg rounded-lg border border-gray-100 w-48 text-sm py-2 z-50">
+                        <div class="px-4 py-2 text-gray-500 border-b" id="accountMenuName">Mon compte</div>
+                        <button onclick="openOrdersPanel()" class="w-full text-left px-4 py-2 hover:bg-amber-50">Mes commandes</button>
+                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2 hover:bg-amber-50 text-red-500">Se déconnecter</button>
+                    </div>
+                </div>
+
+                <button onclick="toggleCartDrawer()" class="hover:text-[#b38f43] transition relative">
                     <i class="fa-solid fa-bag-shopping"></i>
-                    <span class="absolute -top-2 -right-2 bg-[#b38f43] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans">0</span>
-                </a>
+                    <span id="cartCount" class="absolute -top-2 -right-2 bg-[#b38f43] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans">0</span>
+                </button>
             </div>
         </div>
     </header>
@@ -88,32 +105,17 @@
         </div>
     </section>
 
-    <!-- 4. CATEGORIES GRID -->
+    <!-- 4. CATEGORIES GRID (dynamic) -->
     <section id="categories" class="container mx-auto px-4 py-16">
         <h2 class="text-3xl font-serif font-bold text-center mb-2 text-gray-900">Nos Catégories</h2>
         <div class="w-16 h-0.5 bg-[#b38f43] mx-auto mb-12"></div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
-                <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Robes">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Robes</span></div>
-            </div>
-            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
-                <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Casual">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Casual</span></div>
-            </div>
-            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
-                <img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Ensembles">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Ensembles</span></div>
-            </div>
-            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
-                <img src="https://images.unsplash.com/photo-1531310197839-ccf54634509e?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Accessoires">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Accessoires</span></div>
-            </div>
+
+        <div id="categoriesGrid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="col-span-full text-center text-gray-400 py-10"><span class="spinner"></span> Chargement des catégories...</div>
         </div>
     </section>
 
-    <!-- 5. TRENDING PRODUCTS -->
+    <!-- 5. TRENDING PRODUCTS (dynamic) -->
     <section id="nouvelle-collection" class="container mx-auto px-4 pb-16">
         <div class="flex justify-between items-end mb-12">
             <div>
@@ -122,67 +124,24 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <!-- Product Item 1 -->
-            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
-                    <span class="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 font-bold rounded z-10">-20%</span>
-                    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                </div>
-                <div class="mt-4 space-y-1">
-                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Robe d'été Fleurie Chic</h3>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-[#b38f43] font-bold">69.00 DT</span>
-                        <span class="text-gray-400 line-through text-xs">85.00 DT</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Product Item 2 -->
-            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                </div>
-                <div class="mt-4 space-y-1">
-                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Ensemble Veste & Pantalon</h3>
-                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">120.00 DT</span></div>
-                </div>
-            </div>
-            <!-- Product Item 3 -->
-            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                </div>
-                <div class="mt-4 space-y-1">
-                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Chemise Satinée Pastel</h3>
-                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">55.00 DT</span></div>
-                </div>
-            </div>
-            <!-- Product Item 4 -->
-            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1509319117193-57bab727e09d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                </div>
-                <div class="mt-4 space-y-1">
-                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Combinaison Élégante Noire</h3>
-                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">98.00 DT</span></div>
-                </div>
-            </div>
+        <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="col-span-full text-center text-gray-400 py-10"><span class="spinner"></span> Chargement des produits...</div>
         </div>
     </section>
 
-    <!-- 6. POPUP REGISTRATION MODAL -->
+    <!-- 6. POPUP REGISTRATION / LOGIN MODAL -->
     <div id="registerModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 relative shadow-2xl border-t-4 border-[#b38f43]">
             <button onclick="toggleRegisterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-2">Créer un Compte</h3>
-            <p class="text-gray-500 text-sm text-center mb-6">Rejoignez Lella Mode pour suivre vos commandes et recevoir des promos exclusives.</p>
-            
+            <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-2" id="authModalTitle">Créer un Compte</h3>
+            <p class="text-gray-500 text-sm text-center mb-6" id="authModalSubtitle">Rejoignez Lella Mode pour suivre vos commandes et recevoir des promos exclusives.</p>
+
             <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
-                <div>
+                <div id="nameField">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
-                    <input type="text" id="regName" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="Ex: Amira Ben Ali">
+                    <input type="text" id="regName" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="Ex: Amira Ben Ali">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Email</label>
@@ -192,15 +151,92 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
                     <input type="password" id="regPassword" required minlength="6" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="••••••••">
                 </div>
-                <button type="submit" class="w-full bg-gray-900 text-white font-medium py-2.5 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md">
+                <div id="authError" class="hidden text-red-500 text-sm"></div>
+                <button type="submit" id="authSubmitBtn" class="w-full bg-gray-900 text-white font-medium py-2.5 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md">
                     S'inscrire
                 </button>
+                <p class="text-center text-sm text-gray-500">
+                    <span id="switchModeText">Déjà inscrite ?</span>
+                    <button type="button" onclick="switchAuthMode()" class="text-[#b38f43] font-medium hover:underline" id="switchModeBtn">Se connecter</button>
+                </p>
             </form>
             <div id="successMessage" class="hidden text-center text-green-600 font-medium mt-4">
                 🎉 Inscription réussie ! Bienvenue chez Lella Mode.
             </div>
         </div>
     </div>
+
+    <!-- CART DRAWER -->
+    <div id="cartDrawer" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="toggleCartDrawer()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 class="text-xl font-serif font-bold">Mon Panier</h3>
+                <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <p class="text-gray-400 text-center py-10">Votre panier est vide.</p>
+            </div>
+            <div class="border-t p-5 space-y-3">
+                <div class="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span id="cartTotal">0.00 DT</span>
+                </div>
+                <button onclick="openCheckout()" id="checkoutBtn" class="w-full bg-gray-900 text-white font-medium py-3 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md disabled:opacity-40" disabled>
+                    Passer la commande
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 relative shadow-2xl border-t-4 border-[#b38f43] max-h-[90vh] overflow-y-auto">
+            <button onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-6">Finaliser la commande</h3>
+            <form id="checkoutForm" onsubmit="handleCheckoutSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+                    <input type="text" id="checkoutName" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="checkoutEmail" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input type="tel" id="checkoutPhone" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                    <input type="text" id="checkoutAddress" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                    <input type="text" id="checkoutCity" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="Ex: Gabès">
+                </div>
+                <div id="checkoutError" class="hidden text-red-500 text-sm"></div>
+                <button type="submit" class="w-full bg-gray-900 text-white font-medium py-2.5 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md">
+                    Confirmer la commande
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ORDERS PANEL -->
+    <div id="ordersModal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-8 max-w-lg w-full mx-4 relative shadow-2xl border-t-4 border-[#b38f43] max-h-[80vh] overflow-y-auto">
+            <button onclick="closeOrdersPanel()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-6">Mes Commandes</h3>
+            <div id="ordersList" class="space-y-4"><p class="text-gray-400 text-center py-6">Chargement...</p></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <!-- 7. FOOTER & CONTACT -->
     <footer id="contact" class="bg-gray-950 text-gray-400 py-12 border-t border-amber-900/20 backdrop-blur-md">
@@ -236,6 +272,62 @@
 
     <!-- INTERACTIVE JAVASCRIPT -->
     <script>
+        // ---------- SUPABASE SETUP ----------
+        const SUPABASE_URL = 'https://rbnuczfiffsrsezlbeit.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJibnVjemZpZmZzcnNlemxiZWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODk3NjIsImV4cCI6MjA5OTg2NTc2Mn0.dH4KzOC9-HTnkPusbtmvzyqMxmivd5uKMYYUheeCV24';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let authMode = 'register'; // or 'login'
+        let cart = []; // {product_id, name, price, image_url, quantity}
+        let productsCache = [];
+
+        // ---------- TOAST ----------
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        // ---------- AUTH ----------
+        async function refreshSession() {
+            const { data } = await supabase.auth.getSession();
+            currentUser = data.session ? data.session.user : null;
+            updateAccountUI();
+        }
+
+        supabase.auth.onAuthStateChange((_event, session) => {
+            currentUser = session ? session.user : null;
+            updateAccountUI();
+        });
+
+        function updateAccountUI() {
+            const nameEl = document.getElementById('accountMenuName');
+            if (currentUser) {
+                nameEl.textContent = currentUser.email;
+            } else {
+                nameEl.textContent = 'Non connectée';
+            }
+        }
+
+        function handleAccountClick() {
+            if (currentUser) {
+                const menu = document.getElementById('accountMenu');
+                menu.classList.toggle('hidden');
+            } else {
+                toggleRegisterModal();
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('accountMenu');
+            const btn = document.getElementById('accountBtn');
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
         function toggleRegisterModal() {
             const modal = document.getElementById('registerModal');
             if (modal.classList.contains('hidden')) {
@@ -247,30 +339,316 @@
             }
         }
 
-        function handleRegistration(e) {
-            e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            
-            console.log("Compte créé avec succès pour :", { name, email });
+        function switchAuthMode() {
+            authMode = authMode === 'register' ? 'login' : 'register';
+            const title = document.getElementById('authModalTitle');
+            const subtitle = document.getElementById('authModalSubtitle');
+            const nameField = document.getElementById('nameField');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const switchText = document.getElementById('switchModeText');
+            const switchBtn = document.getElementById('switchModeBtn');
+            document.getElementById('authError').classList.add('hidden');
 
-            document.getElementById('registrationForm').classList.add('hidden');
-            document.getElementById('successMessage').classList.remove('hidden');
-
-            setTimeout(() => {
-                toggleRegisterModal();
-                document.getElementById('registrationForm').reset();
-                document.getElementById('registrationForm').classList.remove('hidden');
-                document.getElementById('successMessage').classList.add('hidden');
-            }, 2500);
+            if (authMode === 'login') {
+                title.textContent = 'Se connecter';
+                subtitle.textContent = 'Ravie de vous revoir chez Lella Mode.';
+                nameField.classList.add('hidden');
+                submitBtn.textContent = 'Se connecter';
+                switchText.textContent = 'Pas encore de compte ?';
+                switchBtn.textContent = "S'inscrire";
+            } else {
+                title.textContent = 'Créer un Compte';
+                subtitle.textContent = 'Rejoignez Lella Mode pour suivre vos commandes et recevoir des promos exclusives.';
+                nameField.classList.remove('hidden');
+                submitBtn.textContent = "S'inscrire";
+                switchText.textContent = 'Déjà inscrite ?';
+                switchBtn.textContent = 'Se connecter';
+            }
         }
 
-        function handleNewsletter(e) {
+        async function handleRegistration(e) {
             e.preventDefault();
-            const newsletterEmail = document.getElementById('newsEmail').value;
-            alert(`Félicitations ! L'adresse ${newsletterEmail} est maintenant inscrite aux offres Lella Mode.`);
-            document.getElementById('newsEmail').value = '';
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const name = document.getElementById('regName').value.trim();
+            const errorEl = document.getElementById('authError');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                if (authMode === 'register') {
+                    const { data, error } = await supabase.auth.signUp({
+                        email, password,
+                        options: { data: { full_name: name } }
+                    });
+                    if (error) throw error;
+                    document.getElementById('registrationForm').classList.add('hidden');
+                    document.getElementById('successMessage').classList.remove('hidden');
+                    document.getElementById('successMessage').innerHTML = data.session
+                        ? '🎉 Inscription réussie ! Bienvenue chez Lella Mode.'
+                        : '📧 Inscription réussie ! Vérifiez votre email pour confirmer votre compte.';
+                    setTimeout(() => {
+                        toggleRegisterModal();
+                        document.getElementById('registrationForm').reset();
+                        document.getElementById('registrationForm').classList.remove('hidden');
+                        document.getElementById('successMessage').classList.add('hidden');
+                    }, 2800);
+                } else {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    showToast('Connexion réussie !');
+                    toggleRegisterModal();
+                    document.getElementById('registrationForm').reset();
+                }
+            } catch (err) {
+                errorEl.textContent = translateAuthError(err.message);
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = authMode === 'register' ? "S'inscrire" : 'Se connecter';
+            }
         }
+
+        function translateAuthError(msg) {
+            if (!msg) return "Une erreur s'est produite.";
+            if (msg.includes('already registered') || msg.includes('already exists')) return 'Cet email est déjà utilisé.';
+            if (msg.includes('Invalid login credentials')) return 'Email ou mot de passe incorrect.';
+            if (msg.includes('Password should be')) return 'Le mot de passe doit contenir au moins 6 caractères.';
+            return msg;
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            document.getElementById('accountMenu').classList.add('hidden');
+            showToast('Vous êtes déconnectée.');
+        }
+
+        // ---------- PRODUCTS & CATEGORIES ----------
+        async function loadCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            const { data, error } = await supabase.from('categories').select('*').order('created_at');
+            if (error || !data || data.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">Aucune catégorie disponible.</div>';
+                return;
+            }
+            grid.innerHTML = data.map(cat => `
+                <a href="#nouvelle-collection" class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                    <img src="${cat.image_url || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${cat.name}">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                        <span class="text-white font-semibold text-xl border-b-2 border-white pb-1">${cat.name}</span>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        async function loadProducts() {
+            const grid = document.getElementById('productsGrid');
+            const { data, error } = await supabase.from('products').select('*').eq('is_active', true).order('created_at');
+            if (error || !data || data.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">Aucun produit disponible.</div>';
+                return;
+            }
+            productsCache = data;
+            grid.innerHTML = data.map(p => {
+                const discount = p.compare_at_price ? Math.round(100 - (p.price / p.compare_at_price) * 100) : null;
+                return `
+                <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                        ${discount ? `<span class="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 font-bold rounded z-10">-${discount}%</span>` : ''}
+                        <img src="${p.image_url || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    </div>
+                    <div class="mt-4 space-y-1">
+                        <h3 class="text-gray-700 font-medium text-sm md:text-base">${p.name}</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-[#b38f43] font-bold">${Number(p.price).toFixed(2)} DT</span>
+                            ${p.compare_at_price ? `<span class="text-gray-400 line-through text-xs">${Number(p.compare_at_price).toFixed(2)} DT</span>` : ''}
+                        </div>
+                        <button onclick="addToCart('${p.id}')" class="w-full mt-2 bg-gray-900 text-white text-xs font-medium py-2 rounded-md hover:bg-[#b38f43] transition">
+                            <i class="fa-solid fa-cart-plus mr-1"></i> Ajouter au panier
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ---------- CART ----------
+        function addToCart(productId) {
+            const product = productsCache.find(p => p.id === productId);
+            if (!product) return;
+            const existing = cart.find(i => i.product_id === productId);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ product_id: product.id, name: product.name, price: Number(product.price), image_url: product.image_url, quantity: 1 });
+            }
+            renderCart();
+            showToast(`${product.name} ajouté au panier`);
+        }
+
+        function updateQuantity(productId, delta) {
+            const item = cart.find(i => i.product_id === productId);
+            if (!item) return;
+            item.quantity += delta;
+            if (item.quantity <= 0) cart = cart.filter(i => i.product_id !== productId);
+            renderCart();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(i => i.product_id !== productId);
+            renderCart();
+        }
+
+        function renderCart() {
+            const count = cart.reduce((sum, i) => sum + i.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+            const container = document.getElementById('cartItemsContainer');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            checkoutBtn.disabled = cart.length === 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-10">Votre panier est vide.</p>';
+                document.getElementById('cartTotal').textContent = '0.00 DT';
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center gap-3 border-b pb-3">
+                    <img src="${item.image_url || ''}" class="w-16 h-20 object-cover rounded-md bg-gray-100">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">${item.name}</p>
+                        <p class="text-[#b38f43] font-bold text-sm">${item.price.toFixed(2)} DT</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <button onclick="updateQuantity('${item.product_id}', -1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">-</button>
+                            <span class="text-sm">${item.quantity}</span>
+                            <button onclick="updateQuantity('${item.product_id}', 1)" class="w-6 h-6 border rounded text-gray-600 hover:bg-gray-100">+</button>
+                            <button onclick="removeFromCart('${item.product_id}')" class="ml-3 text-xs text-red-400 hover:underline">Retirer</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            document.getElementById('cartTotal').textContent = `${total.toFixed(2)} DT`;
+        }
+
+        function toggleCartDrawer() {
+            document.getElementById('cartDrawer').classList.toggle('hidden');
+        }
+
+        // ---------- CHECKOUT ----------
+        function openCheckout() {
+            if (cart.length === 0) return;
+            if (currentUser && currentUser.email) {
+                document.getElementById('checkoutEmail').value = currentUser.email;
+            }
+            document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+
+        async function handleCheckoutSubmit(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('checkoutError');
+            errorEl.classList.add('hidden');
+
+            const full_name = document.getElementById('checkoutName').value.trim();
+            const email = document.getElementById('checkoutEmail').value.trim();
+            const phone = document.getElementById('checkoutPhone').value.trim();
+            const address = document.getElementById('checkoutAddress').value.trim();
+            const city = document.getElementById('checkoutCity').value.trim();
+            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+            try {
+                const { data: order, error: orderError } = await supabase.from('orders').insert({
+                    customer_id: currentUser ? currentUser.id : null,
+                    full_name, email, phone, address, city, total
+                }).select().single();
+                if (orderError) throw orderError;
+
+                const items = cart.map(i => ({
+                    order_id: order.id,
+                    product_id: i.product_id,
+                    product_name: i.name,
+                    unit_price: i.price,
+                    quantity: i.quantity
+                }));
+                const { error: itemsError } = await supabase.from('order_items').insert(items);
+                if (itemsError) throw itemsError;
+
+                cart = [];
+                renderCart();
+                closeCheckout();
+                toggleCartDrawer();
+                document.getElementById('checkoutForm').reset();
+                showToast('🎉 Commande confirmée ! Merci pour votre achat.');
+            } catch (err) {
+                errorEl.textContent = "Une erreur s'est produite lors de la commande. Réessayez.";
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        // ---------- ORDERS PANEL ----------
+        async function openOrdersPanel() {
+            document.getElementById('accountMenu').classList.add('hidden');
+            document.getElementById('ordersModal').classList.remove('hidden');
+            const list = document.getElementById('ordersList');
+            list.innerHTML = '<p class="text-gray-400 text-center py-6">Chargement...</p>';
+
+            if (!currentUser) {
+                list.innerHTML = '<p class="text-gray-400 text-center py-6">Connectez-vous pour voir vos commandes.</p>';
+                return;
+            }
+
+            const { data, error } = await supabase.from('orders').select('*, order_items(*)').eq('customer_id', currentUser.id).order('created_at', { ascending: false });
+            if (error || !data || data.length === 0) {
+                list.innerHTML = '<p class="text-gray-400 text-center py-6">Aucune commande pour le moment.</p>';
+                return;
+            }
+
+            list.innerHTML = data.map(order => `
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-medium">Commande du ${new Date(order.created_at).toLocaleDateString('fr-FR')}</span>
+                        <span class="uppercase text-xs font-bold text-[#b38f43]">${order.status}</span>
+                    </div>
+                    <ul class="text-sm text-gray-600 space-y-1 mb-2">
+                        ${order.order_items.map(it => `<li>${it.quantity} x ${it.product_name}</li>`).join('')}
+                    </ul>
+                    <div class="text-right font-bold text-sm">${Number(order.total).toFixed(2)} DT</div>
+                </div>
+            `).join('');
+        }
+
+        function closeOrdersPanel() {
+            document.getElementById('ordersModal').classList.add('hidden');
+        }
+
+        // ---------- NEWSLETTER ----------
+        async function handleNewsletter(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('newsEmail');
+            const email = emailInput.value.trim();
+            const { error } = await supabase.from('newsletter_subscribers').insert({ email });
+            if (error) {
+                if (error.message.includes('duplicate')) {
+                    showToast('Cet email est déjà inscrit à la newsletter.');
+                } else {
+                    showToast("Une erreur s'est produite. Réessayez.");
+                }
+            } else {
+                showToast(`Merci ! ${email} est maintenant inscrit(e) aux offres Lella Mode.`);
+            }
+            emailInput.value = '';
+        }
+
+        // ---------- INIT ----------
+        refreshSession();
+        loadCategories();
+        loadProducts();
     </script>
 </body>
 </html>
