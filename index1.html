@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lella Mode Gabes | Mode Féminine & Tendances en Tunisie</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        html { scroll-behavior: smooth; }
+        
+        /* 💡 COMMENTAIRE : C'est ici que l'image du logo est appliquée en arrière-plan (Watermark) */
+        /* Remplacez 'URL_DE_VOTRE_LOGO_ICI' par le lien de votre image pour l'arrière-plan discret */
+        .bg-logo-watermark {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)), 
+                              url('URL_DE_VOTRE_LOGO_ICI');
+            background-size: 500px;
+            background-repeat: repeat;
+            background-position: center;
+        }
+    </style>
+</head>
+<!-- L'arrière-plan global utilise la classe bg-logo-watermark définie ci-dessus -->
+<body class="bg-logo-watermark text-gray-800 font-sans min-h-screen">
+
+    <!-- 1. TOP ANNOUNCEMENT BAR -->
+    <div class="bg-[#c5a059] text-white text-center py-2 text-sm font-medium tracking-wide shadow-sm">
+        ✨ Livraison gratuite sur toute la Tunisie pour les commandes de plus de 150 DT !
+    </div>
+
+    <!-- 2. NAVIGATION BAR -->
+    <header class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-amber-100">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            
+            <!-- Logo Section -->
+            <a href="#" class="flex items-center space-x-3">
+                <!-- 💡 COMMENTAIRE : Mettez le lien de votre image de logo dans le 'src' ci-dessous pour l'afficher dans la barre de navigation -->
+                <img src="489019445_3786722148140686_851500397286159017_n.jpg" alt="Lella Mode Logo" class="h-12 w-auto object-contain fallback-hidden" onerror="this.style.display='none'">
+                <div class="flex flex-col">
+                    <span class="text-xl font-serif font-bold tracking-wider text-[#b38f43]">LELLA MODE</span>
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-sans -mt-1">Gabes</span>
+                </div>
+            </a>
+            
+            <!-- Working Navigation Links -->
+            <nav class="hidden md:flex space-x-8 font-medium">
+                <a href="#" class="text-[#b38f43] border-b-2 border-[#b38f43] pb-1">Accueil</a>
+                <a href="#nouvelle-collection" class="hover:text-[#b38f43] transition">Nouvelle Collection</a>
+                <a href="#categories" class="hover:text-[#b38f43] transition">Catégories</a>
+                <a href="#contact" class="hover:text-[#b38f43] transition">Contact</a>
+            </nav>
+
+            <!-- User Actions -->
+            <div class="flex items-center space-x-6 text-xl text-gray-700">
+                <a href="#" class="hover:text-[#b38f43] transition"><i class="fa-solid fa-magnifying-glass"></i></a>
+                <!-- Ouvre la boîte d'inscription -->
+                <button onclick="toggleRegisterModal()" class="hover:text-[#b38f43] transition focus:outline-none">
+                    <i class="fa-regular fa-user"></i>
+                </button>
+                <a href="#" class="hover:text-[#b38f43] transition relative">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="absolute -top-2 -right-2 bg-[#b38f43] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. HERO BANNER -->
+    <section class="relative bg-amber-50/60 h-[450px] flex items-center border-b border-amber-100">
+        <div class="container mx-auto px-4 grid md:grid-cols-2 gap-8 items-center h-full">
+            <div class="space-y-6">
+                <span class="text-[#b38f43] font-semibold tracking-widest uppercase text-sm">Nouvelle Saison 2026</span>
+                <h1 class="text-4xl md:text-5xl font-serif font-bold leading-tight text-gray-900">
+                    Élégance & Style à la Tunisienne
+                </h1>
+                <p class="text-gray-600 text-base max-w-md">
+                    Découvrez notre nouvelle collection exclusive de vêtements pour femmes. Des designs modernes et raffinés pour sublimer votre quotidien.
+                </p>
+                <a href="#nouvelle-collection" class="inline-block bg-gray-900 text-white px-8 py-3 font-medium uppercase tracking-wider hover:bg-[#b38f43] transition duration-300 shadow-md">
+                    Acheter Maintenant <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
+                </a>
+            </div>
+            <div class="hidden md:block h-full bg-cover bg-center rounded-l-2xl shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80');">
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. CATEGORIES GRID -->
+    <section id="categories" class="container mx-auto px-4 py-16">
+        <h2 class="text-3xl font-serif font-bold text-center mb-2 text-gray-900">Nos Catégories</h2>
+        <div class="w-16 h-0.5 bg-[#b38f43] mx-auto mb-12"></div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Robes">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Robes</span></div>
+            </div>
+            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Casual">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Casual</span></div>
+            </div>
+            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                <img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Ensembles">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Ensembles</span></div>
+            </div>
+            <div class="group relative overflow-hidden block h-80 bg-gray-200 shadow-md rounded-lg">
+                <img src="https://images.unsplash.com/photo-1531310197839-ccf54634509e?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Accessoires">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><span class="text-white font-semibold text-xl border-b-2 border-white pb-1">Accessoires</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. TRENDING PRODUCTS -->
+    <section id="nouvelle-collection" class="container mx-auto px-4 pb-16">
+        <div class="flex justify-between items-end mb-12">
+            <div>
+                <span class="text-[#b38f43] font-medium uppercase tracking-wider text-sm">Les Incontournables</span>
+                <h2 class="text-3xl font-serif font-bold mt-1 text-gray-900">Tendances Actuelles</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <!-- Product Item 1 -->
+            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                    <span class="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 font-bold rounded z-10">-20%</span>
+                    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="mt-4 space-y-1">
+                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Robe d'été Fleurie Chic</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[#b38f43] font-bold">69.00 DT</span>
+                        <span class="text-gray-400 line-through text-xs">85.00 DT</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Product Item 2 -->
+            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                    <img src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="mt-4 space-y-1">
+                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Ensemble Veste & Pantalon</h3>
+                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">120.00 DT</span></div>
+                </div>
+            </div>
+            <!-- Product Item 3 -->
+            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                    <img src="https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="mt-4 space-y-1">
+                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Chemise Satinée Pastel</h3>
+                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">55.00 DT</span></div>
+                </div>
+            </div>
+            <!-- Product Item 4 -->
+            <div class="group bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div class="relative overflow-hidden bg-gray-100 aspect-[3/4] rounded-lg">
+                    <img src="https://images.unsplash.com/photo-1509319117193-57bab727e09d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="mt-4 space-y-1">
+                    <h3 class="text-gray-700 font-medium text-sm md:text-base">Combinaison Élégante Noire</h3>
+                    <div class="flex items-center"><span class="text-[#b38f43] font-bold">98.00 DT</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. POPUP REGISTRATION MODAL -->
+    <div id="registerModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 relative shadow-2xl border-t-4 border-[#b38f43]">
+            <button onclick="toggleRegisterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-2xl font-serif font-bold text-center text-gray-900 mb-2">Créer un Compte</h3>
+            <p class="text-gray-500 text-sm text-center mb-6">Rejoignez Lella Mode pour suivre vos commandes et recevoir des promos exclusives.</p>
+            
+            <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+                    <input type="text" id="regName" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="Ex: Amira Ben Ali">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Email</label>
+                    <input type="email" id="regEmail" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="Ex: amira@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                    <input type="password" id="regPassword" required minlength="6" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b38f43]" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-gray-900 text-white font-medium py-2.5 rounded-md hover:bg-[#b38f43] transition duration-300 shadow-md">
+                    S'inscrire
+                </button>
+            </form>
+            <div id="successMessage" class="hidden text-center text-green-600 font-medium mt-4">
+                🎉 Inscription réussie ! Bienvenue chez Lella Mode.
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. FOOTER & CONTACT -->
+    <footer id="contact" class="bg-gray-950 text-gray-400 py-12 border-t border-amber-900/20 backdrop-blur-md">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-4">
+                <h3 class="text-white text-xl font-serif font-bold tracking-wider text-[#c5a059]">LELLA MODE GABES</h3>
+                <p class="text-sm max-w-xs">Votre destination mode incontournable en Tunisie pour un look chic et élégant au quotidien.</p>
+                <div class="flex space-x-4 text-lg text-gray-400">
+                    <a href="#" class="hover:text-[#c5a059]"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="hover:text-[#c5a059]"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-[#c5a059]"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-white font-medium mb-4 uppercase tracking-wider text-sm">Contact & Support</h4>
+                <p class="text-sm">📍 Avenue Bourguiba, Gabès, Tunisie</p>
+                <p class="text-sm mt-2">📞 Téléphone: +216 75 000 000</p>
+                <p class="text-sm mt-2">✉️ Email: contact@lellamode.tn</p>
+            </div>
+            <div>
+                <h4 class="text-white font-medium mb-4 uppercase tracking-wider text-sm">Newsletter</h4>
+                <p class="text-sm mb-3">Inscrivez-vous pour ne rien rater de nos nouveautés :</p>
+                <form onsubmit="handleNewsletter(event)" class="flex shadow-md rounded-md overflow-hidden">
+                    <input type="email" id="newsEmail" required placeholder="Votre email" class="w-full bg-gray-800 px-4 py-2.5 text-white text-sm focus:outline-none">
+                    <button type="submit" class="bg-[#b38f43] text-white px-5 hover:bg-[#c5a059] transition"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+        <div class="container mx-auto px-4 text-center text-xs mt-12 pt-6 border-t border-gray-900 tracking-wide">
+            &copy; 2026 Lella Mode Gabes. Tous droits réservés.
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT -->
+    <script>
+        function toggleRegisterModal() {
+            const modal = document.getElementById('registerModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            } else {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            
+            console.log("Compte créé avec succès pour :", { name, email });
+
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('successMessage').classList.remove('hidden');
+
+            setTimeout(() => {
+                toggleRegisterModal();
+                document.getElementById('registrationForm').reset();
+                document.getElementById('registrationForm').classList.remove('hidden');
+                document.getElementById('successMessage').classList.add('hidden');
+            }, 2500);
+        }
+
+        function handleNewsletter(e) {
+            e.preventDefault();
+            const newsletterEmail = document.getElementById('newsEmail').value;
+            alert(`Félicitations ! L'adresse ${newsletterEmail} est maintenant inscrite aux offres Lella Mode.`);
+            document.getElementById('newsEmail').value = '';
+        }
+    </script>
+</body>
+</html>
